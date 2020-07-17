@@ -1,3 +1,7 @@
+import {
+  DefaultInstanceService
+} from './component/default-instance-service';
+
 const chai = require('chai');
 const expect = chai.expect;
 const assert = chai.assert;
@@ -23,6 +27,14 @@ describe('Bean Test', function () {
     install(require('./component/hello-controller'));
     install(require('./component/member-controller'));
     install(require('./component/default-instance-service'));
+  });
+
+  it('default instance test 1', function () {
+    expect(DefaultInstanceService.constructCount).eq(1);
+  });
+
+  it('default instance test 2', function () {
+    expect(DefaultInstanceService.constructCount).eq(1);
   });
 
   it('getBeansByComponentType', async function () {
