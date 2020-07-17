@@ -60,3 +60,24 @@ export interface IBeanContext extends IBeanDefinition {
   state: BeanState;
   instance: any;
 }
+
+export interface ITargetAndBeanDefinition {
+  target: any;
+  beanDefinition: IBeanDefinition;
+}
+
+export function getBeanDefinitionsFromModule(mod: any): ITargetAndBeanDefinition[] {
+  return Object.keys(mod)
+    .reduce((list, key) => {
+      const target = mod[key];
+      if (target) {
+        const beanDefinition: IBeanDefinition = target[S_BeanDefinition] || (target.prototype && target.prototype[S_BeanDefinition]);
+        if (beanDefinition) {
+          list.push({
+            beanDefinition, target
+          });
+        }
+      }
+      return list;
+    }, [] as ITargetAndBeanDefinition[]);
+}
