@@ -10,7 +10,7 @@ import {
   beanFactory, Controller, Model, RequestMapping
 } from './component/project-bean';
 import {
-  MemberDTO 
+  MemberDTO
 } from './component/member-model';
 
 describe('Bean Test', function () {
@@ -22,13 +22,14 @@ describe('Bean Test', function () {
     install(require('./component/test-service'));
     install(require('./component/hello-controller'));
     install(require('./component/member-controller'));
+    install(require('./component/default-instance-service'));
   });
 
   it('getBeansByComponentType', async function () {
     await beanFactory.start();
 
     const services = beanFactory.getBeansByComponentType('Service');
-    expect(services.length).eq(3);
+    expect(services.length).eq(4);
 
     const controllers = beanFactory.getBeansByComponentType(Controller);
     expect(controllers.length).eq(2);

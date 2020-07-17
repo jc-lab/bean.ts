@@ -1,6 +1,5 @@
 import {
-  Service,
-  installer, Inject, Autowired, PostConstruct, PreDestroy
+  Service, Autowired, PostConstruct, PreDestroy
 } from './project-bean';
 
 import {
@@ -8,21 +7,23 @@ import {
 } from './test-service';
 
 @Service()
-export class OldTypeService {
-  constructor(@Inject(TestService) private _testService: TestService) {
-    console.log('OldTypeService: Constructor: testService=', this._testService);
+export class DefaultInstanceService {
+  @Autowired(TestService)
+  private _testService!: TestService;
+
+  constructor() {
+    console.log('DefaultInstanceService: Constructor');
   }
 
   @PostConstruct()
   public postConstruct() {
-    console.log('OldTypeService: postConstruct');
+    console.log('DefaultInstanceService: postConstruct: testService=', this._testService);
   }
 
   @PreDestroy()
   public preDestroy() {
-    console.log('OldTypeService: preDestroy');
+    console.log('DefaultInstanceService: preDestroy');
   }
 }
 
-const INSTANCE = new TestService();
-export default INSTANCE;
+export default new DefaultInstanceService();
