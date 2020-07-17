@@ -1,6 +1,6 @@
 {
   "name": "bean.ts",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -14,7 +14,12 @@
     "prepack": "npm run test && npm run build"
   },
   "keywords": [
-    "bean.ts", "bean", "inject", "autowire", "autowired", "aop"
+    "bean.ts",
+    "bean",
+    "inject",
+    "autowire",
+    "autowired",
+    "aop"
   ],
   "repository": {
     "type": "git",
