@@ -177,6 +177,7 @@ export class BeanFactory {
       beanType: 0,
       dependencies: [],
       constructor: null as any,
+      existInstance: null,
       postConstruct: null,
       preDestroy: null,
       attributeAnnotations: []
@@ -200,6 +201,9 @@ export class BeanFactory {
   public [S_ModuleInstall](beanDefinition: IBeanDefinition, target: any) {
     if (!this._beanDefinitions.find(v => v === beanDefinition)) {
       this._beanDefinitions.push(beanDefinition);
+    }
+    if (target instanceof beanDefinition.constructor) {
+      beanDefinition.existInstance = target;
     }
   }
 
@@ -245,8 +249,12 @@ export class BeanFactory {
         Promise.resolve()
       )
         .then(() => {
-          const bindedConstructor = beanContext.constructor.bind({}, ...constructorParameterList);
-          beanContext.instance = new bindedConstructor();
+          if (beanContext.existInstance) {
+            beanContext.instance = beanContext.existInstance;
+          } else {
+            const bindedConstructor = beanContext.constructor.bind({}, ...constructorParameterList);
+            beanContext.instance = new bindedConstructor();
+          }
           return Promise.resolve();
         })
         .then(() => beanContext.dependencies.reduce(
@@ -267,7 +275,7 @@ export class BeanFactory {
                   } else {
                     Object.defineProperty(beanContext.instance, cur.autowireField, {
                       value: awBeanCtx.instance,
-                      configurable: false,
+                      configurable: !!beanContext.existInstance,
                       writable: false
                     });
                   }

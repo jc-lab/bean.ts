@@ -43,6 +43,7 @@ export interface IBeanDefinition {
   beanName: string;
   beanType: BeanType;
   constructor: any;
+  existInstance: any;
   dependencies: IBeanDependency[];
   postConstruct: Function | null;
   preDestroy: Function | null;
