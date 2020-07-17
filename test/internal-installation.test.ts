@@ -17,6 +17,8 @@ import {
   DefaultInstanceService
 } from './component/default-instance-service';
 
+import defaultInstanceService from './component/default-instance-service';
+
 describe('Bean Installation Test', function () {
   beforeEach(function () {
     beanFactory.reset();
@@ -26,7 +28,6 @@ describe('Bean Installation Test', function () {
     require('./component/test-service');
     require('./component/hello-controller');
     require('./component/member-controller');
-    require('./component/default-instance-service');
   });
 
   it('find bean definitions - export component', async function () {
@@ -38,7 +39,7 @@ describe('Bean Installation Test', function () {
   });
 
   it('find bean definitions - export instance', async function () {
-    const list = getBeanDefinitionsFromModule(require('./component/default-instance-service'));
+    const list = getBeanDefinitionsFromModule(defaultInstanceService);
     console.log(list);
 
     expect(list.length).eq(1);

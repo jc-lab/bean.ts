@@ -69,17 +69,22 @@ export interface ITargetAndBeanDefinition {
 
 export function getBeanDefinitionsFromModule(mod: any): ITargetAndBeanDefinition[] {
   const tempMap: Map<string, ITargetAndBeanDefinition> = new Map();
-  Object.keys(mod)
-    .forEach((key) => {
-      const target = mod[key];
-      if (target) {
-        const beanDefinition: IBeanDefinition = target[S_BeanDefinition] || (target.prototype && target.prototype[S_BeanDefinition]);
-        if (beanDefinition) {
-          tempMap.set(beanDefinition.beanName, {
-            beanDefinition, target
-          });
-        }
-      }
-    });
+  const check = (target: any) => {
+    if (!target) return false;
+    const beanDefinition: IBeanDefinition = target[S_BeanDefinition] || (target.prototype && target.prototype[S_BeanDefinition]);
+    if (beanDefinition) {
+      tempMap.set(beanDefinition.beanName, {
+        beanDefinition, target
+      });
+      return true;
+    }
+    return false;
+  };
+  if (!check(mod)) {
+    Object.keys(mod)
+      .forEach((key) => {
+        check(mod[key]);
+      });
+  }
   return [...tempMap.values()];
 }
