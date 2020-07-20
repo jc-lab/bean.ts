@@ -71,7 +71,14 @@ export function getBeanDefinitionsFromModule(mod: any): ITargetAndBeanDefinition
   const tempMap: Map<string, ITargetAndBeanDefinition> = new Map();
   const check = (target: any) => {
     if (!target) return false;
-    const beanDefinition: IBeanDefinition = target[S_BeanDefinition] || (target.prototype && target.prototype[S_BeanDefinition]);
+    let prototype: any = null;
+    if (typeof target === 'function') {
+      prototype = target.prototype;
+    } else if (target instanceof Object) {
+      prototype = Object.getPrototypeOf(target);
+    }
+    if (!prototype) return false;
+    const beanDefinition: IBeanDefinition = prototype[S_BeanDefinition];
     if (beanDefinition) {
       tempMap.set(beanDefinition.beanName, {
         beanDefinition, target

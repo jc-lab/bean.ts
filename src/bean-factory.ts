@@ -47,7 +47,7 @@ export class BeanFactory {
     const beanType = typeof options.beanType === 'undefined' ? BeanType.Singletone : options.beanType;
     return <TFunction extends Function>(target: TFunction): TFunction | void => {
       const beanName = options.beanName || target.name;
-      const beanDefinition = this._getBeanDefinition(target);
+      const beanDefinition = this._getBeanDefinition(target, 'class');
       beanDefinition.className = target.name;
       beanDefinition.beanName = beanName;
       beanDefinition.beanType = beanType;
@@ -60,7 +60,7 @@ export class BeanFactory {
 
   public makeMethodAttributeAnnotation<T extends Function>(options: IAttributeAnnotation): MethodDecorator {
     return <T>(target: Object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>): TypedPropertyDescriptor<T> | void => {
-      const beanDefinition = this._getBeanDefinition(target);
+      const beanDefinition = this._getBeanDefinition(target, 'prototype');
       beanDefinition.attributeAnnotations
         .push({
           targetType: AttributeAnnotationTargetType.Method,
@@ -79,7 +79,7 @@ export class BeanFactory {
 
   public Autowired<T>(injectType: ConstructorType<T>, options?: IAutowiredOptions): PropertyDecorator {
     return (target: Object, propertyName: string | symbol): void => {
-      const beanDefinition = this._getBeanDefinition(target);
+      const beanDefinition = this._getBeanDefinition(target, 'prototype');
       const lazy = options && options.lazy || false;
 
       if (options && options.name) {
@@ -109,7 +109,7 @@ export class BeanFactory {
       this.warnLog(new Error('Detecting the possibility of circular dependence on compiling. injectType is undefined'));
     }
     return (target: Object, propertyKey: string | symbol, parameterIndex: number): void => {
-      const beanDefinition = this._getBeanDefinition(target);
+      const beanDefinition = this._getBeanDefinition(target, 'prototype');
       if (options && options.name) {
         beanDefinition.dependencies.push({
           type: BeanDependencyType.CONSTRUCTOR,
@@ -136,7 +136,7 @@ export class BeanFactory {
 
   public PostConstruct(options?: IAutowiredOptions) {
     return (target: Object, propertyName: string | symbol, descriptor: TypedPropertyDescriptor<PostConstructFunction>): TypedPropertyDescriptor<PostConstructFunction> => {
-      const beanDefinition = this._getBeanDefinition(target);
+      const beanDefinition = this._getBeanDefinition(target, 'prototype');
       if (typeof descriptor.value !== 'function') {
         throw Error('@PostConstructor is can use only to method');
       }
@@ -147,7 +147,7 @@ export class BeanFactory {
 
   public PreDestroy(options?: IAutowiredOptions) {
     return (target: Object, propertyName: string | symbol, descriptor: TypedPropertyDescriptor<PreDestroyFunction>): TypedPropertyDescriptor<PreDestroyFunction> => {
-      const beanDefinition = this._getBeanDefinition(target);
+      const beanDefinition = this._getBeanDefinition(target, 'prototype');
       if (typeof descriptor.value !== 'function') {
         throw Error('@PreDestroy is can use only to method');
       }
@@ -156,15 +156,17 @@ export class BeanFactory {
     };
   }
 
-  private _getBeanDefinition(target: any): IBeanDefinition {
-    let prototype = target;
-    if (typeof target === 'function') {
-      // Constructor
-      prototype = target.prototype;
-      if (typeof target.prototype === 'undefined') {
-        prototype = {};
-        target.prototype = prototype;
+  private _getBeanDefinition(target: any, targetType?: 'class' | 'prototype'): IBeanDefinition {
+    let prototype;
+    if ((targetType === 'class') || (typeof target === 'function')) {
+      if (!target.prototype) {
+        target.prototype = {};
       }
+      prototype = target.prototype;
+    } else if (targetType === 'prototype') {
+      prototype = target;
+    } else {
+      prototype = Object.getPrototypeOf(target);
     }
     if (prototype[S_BeanDefinition]) {
       return prototype[S_BeanDefinition];
@@ -182,8 +184,7 @@ export class BeanFactory {
       preDestroy: null,
       attributeAnnotations: []
     };
-    // prototype[S_BeanDefinition] = beanDefinition;
-    Object.defineProperty(target, S_BeanDefinition, {
+    Object.defineProperty(prototype, S_BeanDefinition, {
       value: beanDefinition,
       writable: false
     });
