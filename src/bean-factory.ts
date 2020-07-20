@@ -88,7 +88,7 @@ export class BeanFactory {
           autowireField: propertyName,
           autowireLazy: lazy,
           beanName: options.name,
-          className: injectType.name
+          className: injectType && injectType.name
         });
       } else if (typeof propertyName === 'string') {
         beanDefinition.dependencies.push({
@@ -96,7 +96,7 @@ export class BeanFactory {
           autowireField: propertyName,
           autowireLazy: lazy,
           beanName: this._propertyNameToBeanName(propertyName),
-          className: injectType.name
+          className: injectType && injectType.name
         });
       } else {
         throw new Error('property name must be string without beanName');
