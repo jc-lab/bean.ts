@@ -41,6 +41,7 @@ export interface IReflectionClass<T> {
 
 export interface IInstancedClass<T> extends IReflectionClass<T> {
   getObject(): T;
+  getBeanName(): string;
 }
 
 export interface IReflectionMethod {

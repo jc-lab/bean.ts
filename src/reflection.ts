@@ -95,6 +95,10 @@ export class InstancedClass<T> implements IInstancedClass<T> {
     this[S_BeanContext] = beanContext;
   }
 
+  getBeanName(): string {
+    return this[S_BeanContext].beanName;
+  }
+
   getAnnotation(attributeType: Function | string): IAttributeAnnotation | undefined {
     return getAnnotationImpl(this[S_BeanContext], AttributeAnnotationTargetType.Method, attributeType);
   }
