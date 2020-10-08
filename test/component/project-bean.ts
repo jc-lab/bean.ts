@@ -22,11 +22,12 @@ export function Service(options?: IBeanOptions) {
   });
 }
 
-export function Controller(options?: IBeanOptions) {
+export function Controller(options?: IBeanOptions & { testAttr: string }) {
   return beanFactory.makeRegisterAnnotation({
     componentType: 'Controller',
     beanType: BeanType.Singletone,
-    beanName: options?.name
+    beanName: options?.name,
+    options: options
   });
 }
 

@@ -27,6 +27,7 @@ describe('Bean Test', function () {
     install(require('./component/hello-controller'));
     install(require('./component/member-controller'));
     install(require('./component/default-instance-service'));
+    install(require('./component/stranger-service-and-controller'));
   });
 
   it('default instance test 1', function () {
@@ -41,10 +42,11 @@ describe('Bean Test', function () {
     await beanFactory.start();
 
     const services = beanFactory.getBeansByComponentType('Service');
-    expect(services.length).eq(4);
+    expect(services.length).eq(5);
 
     const controllers = beanFactory.getBeansByComponentType(Controller);
-    expect(controllers.length).eq(2);
+    console.log('controllers : ', controllers)
+    expect(controllers.length).eq(3);
 
     await beanFactory.stop();
   });
@@ -88,7 +90,14 @@ describe('Bean Test', function () {
     await beanFactory.start();
 
     const controllers = beanFactory.getBeansByComponentType(Controller);
-    expect(controllers.length).eq(2);
+    expect(controllers.length).eq(3);
+    controllers
+      .forEach(v => {
+        if (v.getBeanName() === 'HelloController') {
+          const a = v.getAnnotation(Controller);
+          expect(a && a.options.testAttr).eq('abcdefg');
+        }
+      });
 
     const requestMappings = controllers
       .map(controller => controller.getMethodsByAnnotation(RequestMapping).map(v => ({v, c: controller})))

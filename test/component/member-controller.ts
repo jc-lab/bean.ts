@@ -3,7 +3,7 @@ import {
 } from './project-bean';
 
 import {
-  MemberService 
+  MemberService
 } from './member-service';
 
 @Controller()

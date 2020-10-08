@@ -3,10 +3,12 @@ import {
 } from './project-bean';
 
 import {
-  TestService 
+  TestService
 } from './test-service';
 
-@Controller()
+@Controller({
+  testAttr: 'abcdefg'
+})
 export class HelloController {
   public constructor(@Inject(TestService, {
     name: 'custom-named-test'

@@ -28,6 +28,7 @@ describe('Bean Installation Test', function () {
     require('./component/test-service');
     require('./component/hello-controller');
     require('./component/member-controller');
+    require('./component/stranger-service-and-controller');
   });
 
   it('find bean definitions - export component', async function () {

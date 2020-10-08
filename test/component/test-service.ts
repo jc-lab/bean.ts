@@ -4,8 +4,10 @@ import {
 } from './project-bean';
 
 import {
-  HelloService 
+  HelloService
 } from './hello-service';
+
+console.log('===== BEGIN TestService');
 
 @Service({
   name: 'custom-named-test'
@@ -32,5 +34,6 @@ export class TestService {
     return a + b;
   }
 }
+console.log('===== END TestService');
 
 export default installer;
