@@ -2,7 +2,8 @@ import {
   BeanFactory
 } from './bean-factory';
 import {
-  BeanType
+  BeanType,
+  IAnnotatedMethodParameter
 } from './types';
 
 export const S_BeanDefinition = Symbol('BeanDefinition');
@@ -29,12 +30,23 @@ export interface IBeanDependency {
   constructorIndex?: number;
 }
 
-export interface IAttributeAnnotationDefinition {
-  targetType: AttributeAnnotationTargetType;
+export interface IAttributeAnnotationDefinitionForOther {
+  targetType: AttributeAnnotationTargetType.Class;
   targetDescriptor: PropertyDescriptor;
   attributeType: string;
   options: any;
 }
+
+export interface IAttributeAnnotationDefinitionForMethod {
+  targetType: AttributeAnnotationTargetType.Method;
+  targetPropertyKey?: string | symbol;
+  targetDescriptor: PropertyDescriptor;
+  attributeType: string;
+  options: any;
+  parameters: (IAnnotatedMethodParameter | undefined)[];
+}
+
+export type IAttributeAnnotationDefinition = IAttributeAnnotationDefinitionForOther | IAttributeAnnotationDefinitionForMethod;
 
 export interface IBeanDefinition {
   context: BeanFactory;

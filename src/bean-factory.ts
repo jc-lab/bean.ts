@@ -9,12 +9,14 @@ import {
   IReflectionMethod,
   ConstructorType,
   PostConstructFunction,
-  PreDestroyFunction
+  PreDestroyFunction,
+  IAnnotatedMethodParameter
 } from './types';
 import {
   AttributeAnnotationTargetType,
   BeanDependencyType,
   BeanState, IBeanContext,
+  IAttributeAnnotationDefinitionForMethod,
   IBeanDefinition,
   IBeanDependency,
   S_BeanDefinition,
@@ -64,16 +66,64 @@ export class BeanFactory {
     };
   }
 
+  private _getAttributeAnnotationsForMethod(beanDefinition: IBeanDefinition, propertyKey: string | symbol): IAttributeAnnotationDefinitionForMethod {
+    let item: IAttributeAnnotationDefinitionForMethod = beanDefinition.attributeAnnotations
+      .find(v =>
+        v.targetType === AttributeAnnotationTargetType.Method &&
+        v.targetPropertyKey === propertyKey
+      ) as IAttributeAnnotationDefinitionForMethod;
+    if (!item) {
+      item = {
+        targetType: AttributeAnnotationTargetType.Method,
+        targetPropertyKey: propertyKey,
+        targetDescriptor: undefined as any,
+        attributeType: undefined as any,
+        options: undefined as any,
+        parameters: undefined as any
+      };
+      beanDefinition.attributeAnnotations.push(item);
+    }
+    return item;
+  }
+
+  private _preinitAttributeAnnotationsForMethod(object: IAttributeAnnotationDefinitionForMethod, descriptor: TypedPropertyDescriptor<any>) {
+    const func: Function = (descriptor.value as any);
+    const parameters: IAnnotatedMethodParameter[] = Array<IAnnotatedMethodParameter>(func.length);
+    object.targetDescriptor = descriptor;
+    if (!object.parameters) {
+      object.parameters = parameters;
+    } else if (object.parameters.length != func.length) {
+      for (let i = 0; i < parameters.length; i++) {
+        if (!object.parameters[i]) {
+          object.parameters[i] = undefined as any;
+        }
+      }
+    }
+  }
+
   public makeMethodAttributeAnnotation<T extends Function>(options: IAttributeAnnotation): MethodDecorator {
     return <T>(target: Object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>): TypedPropertyDescriptor<T> | void => {
       const beanDefinition = this._getBeanDefinition(target, 'prototype');
-      beanDefinition.attributeAnnotations
-        .push({
-          targetType: AttributeAnnotationTargetType.Method,
-          targetDescriptor: descriptor,
-          attributeType: options.attributeType,
-          options: options.options
-        });
+      const definedMethod = this._getAttributeAnnotationsForMethod(beanDefinition, propertyKey);
+      definedMethod.targetDescriptor = descriptor;
+      definedMethod.attributeType = options.attributeType;
+      definedMethod.options = options.options;
+      this._preinitAttributeAnnotationsForMethod(definedMethod, descriptor);
+    };
+  }
+
+  public makeMethodParameterAnnotation<T extends Function>(options: IAttributeAnnotation): ParameterDecorator {
+    return <T>(target: Object, propertyKey: string | symbol, parameterIndex: number): TypedPropertyDescriptor<T> | void => {
+      const beanDefinition = this._getBeanDefinition(target, 'prototype');
+      const definedMethod = this._getAttributeAnnotationsForMethod(beanDefinition, propertyKey);
+      if (!definedMethod.parameters) {
+        definedMethod.parameters = [];
+      }
+      definedMethod.parameters[parameterIndex] = {
+        index: parameterIndex,
+        attributeType: options.attributeType,
+        options: options.options
+      };
     };
   }
 

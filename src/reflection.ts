@@ -1,9 +1,13 @@
 import {
-  BeanType, IAttributeAnnotation, IInstancedClass, IReflectionClass, IReflectionMethod
+  BeanType, IAttributeAnnotation, IInstancedClass, IReflectionClass, IReflectionMethod,
+  IAnnotatedMethodParameter
 } from './types';
 
 import {
-  AttributeAnnotationTargetType, IAttributeAnnotationDefinition, IBeanContext
+  AttributeAnnotationTargetType,
+  IAttributeAnnotationDefinition,
+  IAttributeAnnotationDefinitionForMethod,
+  IBeanContext
 } from './intl';
 
 const S_BeanContext = Symbol('BeanContext');
@@ -52,7 +56,7 @@ function getMethodsByAnnotationImpl(beanContext: IBeanContext, attributeType: Fu
     v.attributeType === attributeName &&
     v.targetType === AttributeAnnotationTargetType.Method &&
     (descriptor ? (descriptor === v.targetDescriptor) : true)
-  );
+  ) as IAttributeAnnotationDefinitionForMethod[];
   return list.map(v => new ReflectionMethod(beanContext, v));
 }
 
@@ -135,9 +139,9 @@ function getFunctionFromAnnotation(definition: IAttributeAnnotationDefinition): 
 
 export class ReflectionMethod implements IReflectionMethod {
   private [S_BeanContext]: IBeanContext;
-  private [S_Attr]: IAttributeAnnotationDefinition;
+  private [S_Attr]: IAttributeAnnotationDefinitionForMethod;
 
-  constructor(beanContext: IBeanContext, attr: IAttributeAnnotationDefinition) {
+  constructor(beanContext: IBeanContext, attr: IAttributeAnnotationDefinitionForMethod) {
     this[S_BeanContext] = beanContext;
     this[S_Attr] = attr;
   }
@@ -155,6 +159,10 @@ export class ReflectionMethod implements IReflectionMethod {
   call(thisArg: any, ...argArray: any[]): any {
     const func = getFunctionFromAnnotation(this[S_Attr]);
     return func.call(thisArg, ...argArray);
+  }
+
+  getParameters(): (IAnnotatedMethodParameter | undefined)[] {
+    return this[S_Attr].parameters;
   }
 
   getAnnotation(attributeType: Function | string): IAttributeAnnotation | undefined {

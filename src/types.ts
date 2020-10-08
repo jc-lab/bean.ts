@@ -32,6 +32,12 @@ export interface IBeanOptions {
   name?: string;
 }
 
+export interface IAnnotatedMethodParameter {
+  index: number;
+  attributeType: string;
+  options: any;
+}
+
 export interface IReflectionClass<T> {
   getAnnotations(): IAttributeAnnotation[] | undefined;
   getAnnotationsByType(attributeType: Function | string): IAttributeAnnotation[];
@@ -49,6 +55,7 @@ export interface IReflectionMethod {
   getAnnotations(): IAttributeAnnotation[] | undefined;
   getAnnotationsByType(attributeType: Function | string): IAttributeAnnotation[];
   getAnnotation(attributeType: Function | string): IAttributeAnnotation | undefined;
+  getParameters(): (IAnnotatedMethodParameter | undefined)[];
   apply(thisArg: any, argArray?: any): any;
   call(thisArg: any, ...argArray: any[]): any;
   bind(thisArg: any, ...argArray: any[]): any;
