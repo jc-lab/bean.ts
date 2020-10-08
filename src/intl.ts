@@ -38,7 +38,7 @@ export interface IAttributeAnnotationDefinition {
 
 export interface IBeanDefinition {
   context: BeanFactory;
-  componentType: string;
+  componentTypes: string[];
   className: string;
   beanName: string;
   beanType: BeanType;

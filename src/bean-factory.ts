@@ -52,7 +52,7 @@ export class BeanFactory {
       beanDefinition.beanName = beanName;
       beanDefinition.beanType = beanType;
       beanDefinition.constructor = target;
-      beanDefinition.componentType = options.componentType;
+      beanDefinition.componentTypes.push(options.componentType);
       this._beanDefinitions.push(beanDefinition);
       return target;
     };
@@ -175,7 +175,7 @@ export class BeanFactory {
       context: this,
       className: '',
       beanName: '',
-      componentType: '',
+      componentTypes: [],
       beanType: 0,
       dependencies: [],
       constructor: null as any,
@@ -521,7 +521,7 @@ export class BeanFactory {
     return this._beanDefinitions.reduce(
       (list, cur) => {
         const beanContext = this._beanContextMap.get(cur.beanName) as IBeanContext;
-        if (beanContext.componentType === componentTypeName) {
+        if (beanContext.componentTypes.findIndex(v => v === componentTypeName) >= 0) {
           list.push(new InstancedClass(beanContext));
         }
         return list;
@@ -535,7 +535,7 @@ export class BeanFactory {
     return this._beanDefinitions.reduce(
       (list, cur) => {
         const beanContext = this._beanContextMap.get(cur.beanName) as IBeanContext;
-        if (beanContext.componentType === componentTypeName) {
+        if (beanContext.componentTypes.findIndex(v => v === componentTypeName) >= 0) {
           list.push(new ReflectionClass(beanContext));
         }
         return list;
