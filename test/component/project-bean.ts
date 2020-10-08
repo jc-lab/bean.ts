@@ -41,6 +41,20 @@ export function RequestMapping(options?: {
   });
 }
 
+export function HttpRequestParam() {
+  return beanFactory.makeMethodParameterAnnotation({
+    attributeType: 'HttpRequestParam',
+    options: null
+  });
+}
+
+export function HttpResponseParam() {
+  return beanFactory.makeMethodParameterAnnotation({
+    attributeType: 'HttpResponseParam',
+    options: null
+  });
+}
+
 
 export const Inject = beanFactory.Inject.bind(beanFactory);
 export const Autowired = beanFactory.Autowired.bind(beanFactory);

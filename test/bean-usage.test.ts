@@ -105,7 +105,7 @@ describe('Bean Test', function () {
         list.push(...cur);
         return list;
       }, []);
-    expect(requestMappings.length).eq(3);
+    expect(requestMappings.length).eq(4);
 
     const getUsers = requestMappings.find(v => {
       const a = v.v.getAnnotation(RequestMapping);
@@ -119,9 +119,14 @@ describe('Bean Test', function () {
       const a = v.v.getAnnotation(RequestMapping);
       return a && (a.options.path === '/hello') && (a.options.method === 'get');
     });
+    const smartParameters = requestMappings.find(v => {
+      const a = v.v.getAnnotation(RequestMapping);
+      return a && (a.options.path === '/smartParameters') && (a.options.method === 'get');
+    });
     expect(getUsers).to.exist;
     expect(postUsers).to.exist;
     expect(getHello).to.exist;
+    expect(smartParameters).to.exist;
 
     if (getHello) {
       const temp = getHello.v.apply(getHello.c.getObject(), [10, 20]);
@@ -134,6 +139,12 @@ describe('Bean Test', function () {
     if (postUsers) {
       const temp = postUsers.v.apply(postUsers.c.getObject(), [10, 20]);
       expect(temp).eq('called post users, a=10, b=20');
+    }
+    if (smartParameters) {
+      const params = smartParameters.v.getParameters();
+      expect(params.length).eq(2);
+      expect(params[0] && params[0].attributeType).eq('HttpRequestParam');
+      expect(params[1] && params[1].attributeType).eq('HttpResponseParam');
     }
 
     await beanFactory.stop();

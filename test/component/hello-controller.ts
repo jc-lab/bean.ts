@@ -1,5 +1,6 @@
 import {
-  installer, Controller, Inject, PostConstruct, PreDestroy, RequestMapping
+  installer, Controller, Inject, PostConstruct, PreDestroy, RequestMapping,
+  HttpRequestParam, HttpResponseParam
 } from './project-bean';
 
 import {
@@ -33,6 +34,14 @@ export class HelloController {
   public getHello(a: number, b: number) {
     const c = this.testService.add(a, b);
     return `called hello, a=${a}, b=${b}, c=${c}`;
+  }
+
+  @RequestMapping({
+    path: '/smartParameters',
+    method: 'get'
+  })
+  public smartParameters(@HttpRequestParam() req: any, @HttpResponseParam() res: any) {
+    return `req=${req}, ${res}`;
   }
 }
 
