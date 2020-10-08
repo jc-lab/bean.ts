@@ -100,15 +100,15 @@ export class InstancedClass<T> implements IInstancedClass<T> {
   }
 
   getAnnotation(attributeType: Function | string): IAttributeAnnotation | undefined {
-    return getAnnotationImpl(this[S_BeanContext], AttributeAnnotationTargetType.Method, attributeType);
+    return getAnnotationImpl(this[S_BeanContext], AttributeAnnotationTargetType.Class, attributeType);
   }
 
   getAnnotations(): IAttributeAnnotation[] {
-    return getAnnotationsImpl(this[S_BeanContext], AttributeAnnotationTargetType.Method);
+    return getAnnotationsImpl(this[S_BeanContext], AttributeAnnotationTargetType.Class);
   }
 
   getAnnotationsByType(attributeType: Function | string): IAttributeAnnotation[] {
-    return getAnnotationsByTypeImpl(this[S_BeanContext], AttributeAnnotationTargetType.Method, attributeType);
+    return getAnnotationsByTypeImpl(this[S_BeanContext], AttributeAnnotationTargetType.Class, attributeType);
   }
 
   getObject(): T {

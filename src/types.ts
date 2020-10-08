@@ -11,6 +11,7 @@ export interface IMakeAnnotationOptions {
   componentType: string;
   beanType: BeanType;
   beanName?: string;
+  options?: any;
 }
 
 export interface IAttributeAnnotation {

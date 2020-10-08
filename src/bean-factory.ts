@@ -53,6 +53,12 @@ export class BeanFactory {
       beanDefinition.beanType = beanType;
       beanDefinition.constructor = target;
       beanDefinition.componentTypes.push(options.componentType);
+      beanDefinition.attributeAnnotations.push({
+        targetType: AttributeAnnotationTargetType.Class,
+        targetDescriptor: null as any,
+        attributeType: options.componentType,
+        options: options.options
+      });
       this._beanDefinitions.push(beanDefinition);
       return target;
     };
