@@ -515,7 +515,10 @@ export class BeanFactory {
     return this._beanDefinitions.reduce(
       (prev, cur) => prev.then(() => this._stopBean(this._beanContextMap.get(cur.beanName) as any)),
       Promise.resolve()
-    );
+    )
+      .then(() => {
+        this._beanClassMap = new Map();
+      });
   }
 
   public reset() {
