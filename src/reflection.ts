@@ -80,7 +80,7 @@ export class ReflectionClass<T> implements IReflectionClass<T> {
   }
 
   newInstance(...parameters: any[]): T {
-    if (this[S_BeanContext].beanType != BeanType.Model) {
+    if (!this[S_BeanContext].beanType.has(BeanType.Model)) {
       throw new Error(`${this[S_BeanContext].className} is not model`);
     }
     const bindedConstructor = this[S_BeanContext].constructor.bind({}, ...parameters);

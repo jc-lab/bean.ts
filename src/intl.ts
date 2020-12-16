@@ -53,7 +53,7 @@ export interface IBeanDefinition {
   componentTypes: string[];
   className: string;
   beanName: string;
-  beanType: BeanType;
+  beanType: Set<BeanType>;
   constructor: any;
   existInstance: any;
   dependencies: IBeanDependency[];

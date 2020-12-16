@@ -1,5 +1,5 @@
 import {
-  Service, Autowired, PostConstruct, PreDestroy
+  Service, Autowired, PostConstruct, PreDestroy, Slf4j
 } from './project-bean';
 
 import {
@@ -8,6 +8,7 @@ import {
 
 let constructCount = 0;
 
+@Slf4j()
 @Service()
 export class DefaultInstanceService {
   @Autowired(TestService)

@@ -52,7 +52,7 @@ export class BeanFactory {
       const beanDefinition = this._getBeanDefinition(target, 'class');
       beanDefinition.className = target.name;
       beanDefinition.beanName = beanName;
-      beanDefinition.beanType = beanType;
+      beanDefinition.beanType.add(beanType);
       beanDefinition.constructor = target;
       beanDefinition.componentTypes.push(options.componentType);
       beanDefinition.attributeAnnotations.push({
@@ -61,7 +61,9 @@ export class BeanFactory {
         attributeType: options.componentType,
         options: options.options
       });
-      this._beanDefinitions.push(beanDefinition);
+      if (!this._beanDefinitions.find(v => v === beanDefinition)) {
+        this._beanDefinitions.push(beanDefinition);
+      }
       return target;
     };
   }
@@ -232,7 +234,7 @@ export class BeanFactory {
       className: '',
       beanName: '',
       componentTypes: [],
-      beanType: 0,
+      beanType: new Set<BeanType>(),
       dependencies: [],
       constructor: null as any,
       existInstance: null,
@@ -269,7 +271,7 @@ export class BeanFactory {
   }
 
   private _initBean(beanContext: IBeanContext): Promise<void> {
-    if (beanContext.beanType === BeanType.Singletone) {
+    if (beanContext.beanType.has(BeanType.Singletone)) {
       if (beanContext.state == BeanState.Initialized) {
         return Promise.resolve();
       }
@@ -424,7 +426,7 @@ export class BeanFactory {
   }
 
   private _stopBean(beanContext: IBeanContext): Promise<void> {
-    if (beanContext.beanType === BeanType.Singletone) {
+    if (beanContext.beanType.has(BeanType.Singletone)) {
       if (beanContext.state === BeanState.Stopped) {
         return Promise.resolve();
       }
@@ -554,7 +556,7 @@ export class BeanFactory {
     if (!beanContext) {
       return null;
     }
-    if (beanContext.beanType !== BeanType.Model) {
+    if (!beanContext.beanType.has(BeanType.Model)) {
       throw new Error(`Unknown model by modelName=${beanName}`);
     }
     return new ReflectionClass(beanContext);
@@ -566,7 +568,7 @@ export class BeanFactory {
     if (!beanContext || beanContext.length != 1) {
       return null;
     }
-    if (beanContext[0].beanType !== BeanType.Model) {
+    if (!beanContext[0].beanType.has(BeanType.Model)) {
       throw new Error(`Unknown model by className=${requiredType}`);
     }
     return new ReflectionClass<T>(beanContext[0]);

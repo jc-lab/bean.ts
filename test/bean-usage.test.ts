@@ -11,11 +11,17 @@ import {
   install, IReflectionClass, IReflectionMethod
 } from '../src/';
 import {
-  beanFactory, Controller, Model, RequestMapping
+  beanFactory, Controller, Model, RequestMapping, Slf4j
 } from './component/project-bean';
 import {
   MemberDTO
 } from './component/member-model';
+import {MemberService} from "./component/member-service";
+import {HelloService} from "./component/hello-service";
+import {TestService} from "./component/test-service";
+import {StangerComponent} from "./component/stranger-service-and-controller";
+import {HelloController} from "./component/hello-controller";
+import {MemberController} from "./component/member-controller";
 
 describe('Bean Test', function () {
   beforeEach(function () {
@@ -44,9 +50,27 @@ describe('Bean Test', function () {
     const services = beanFactory.getBeansByComponentType('Service');
     expect(services.length).eq(5);
 
+    expect(services.find(v => v.getObject() instanceof MemberService)).to.exist;
+    expect(services.find(v => v.getObject() instanceof HelloService)).to.exist;
+    expect(services.find(v => v.getObject() instanceof TestService)).to.exist;
+    expect(services.find(v => v.getObject() instanceof DefaultInstanceService)).to.exist;
+    expect(services.find(v => v.getObject() instanceof StangerComponent)).to.exist;
+
     const controllers = beanFactory.getBeansByComponentType(Controller);
-    console.log('controllers : ', controllers)
     expect(controllers.length).eq(3);
+
+    expect(controllers.find(v => v.getObject() instanceof HelloController)).to.exist;
+    expect(controllers.find(v => v.getObject() instanceof MemberController)).to.exist;
+    expect(controllers.find(v => v.getObject() instanceof StangerComponent)).to.exist;
+
+    await beanFactory.stop();
+  });
+
+  it('getBeansByComponentType Annotated', async function () {
+    await beanFactory.start();
+
+    const slf4jBeans = beanFactory.getBeansByComponentType(Slf4j);
+    expect(slf4jBeans.find(v => v.getObject() instanceof DefaultInstanceService)).to.exist;
 
     await beanFactory.stop();
   });

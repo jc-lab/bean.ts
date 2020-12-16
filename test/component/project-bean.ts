@@ -55,6 +55,13 @@ export function HttpResponseParam() {
   });
 }
 
+export function Slf4j() {
+  return beanFactory.makeRegisterAnnotation({
+    componentType: 'Slf4j',
+    beanType: BeanType.Annotated
+  });
+}
+
 
 export const Inject = beanFactory.Inject.bind(beanFactory);
 export const Autowired = beanFactory.Autowired.bind(beanFactory);

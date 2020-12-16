@@ -4,7 +4,8 @@ export type ConstructorType<T> = (new (...args: any) => T);
 
 export enum BeanType {
   Singletone,
-  Model
+  Model,
+  Annotated
 }
 
 export interface IMakeAnnotationOptions {
