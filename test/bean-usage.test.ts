@@ -95,7 +95,7 @@ describe('Bean Test', function () {
       expect(model1.newInstance()).to.be.an.instanceof(MemberDTO);
     }
 
-    const model2: IReflectionClass<MemberDTO> | null = beanFactory.getModelByClass<MemberDTO>('MemberDTO');
+    const model2: IReflectionClass<MemberDTO> | null = beanFactory.getModelByClass<MemberDTO>(MemberDTO);
     expect(model2).to.exist;
     if (model2) {
       expect(model2.newInstance()).to.be.an.instanceof(MemberDTO);

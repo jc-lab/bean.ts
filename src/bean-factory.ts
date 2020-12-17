@@ -26,11 +26,18 @@ import {
   InstancedClass, ReflectionClass
 } from './reflection';
 
+import TypedKeyMap from './typedkeymap';
+
 export type WarnLogOutput = (e: Error) => void;
 
 function dumpDependencyPrefix(depth: number) {
   return (depth > 1 ? '+' : '') + '-'.repeat( depth - 1) + (depth > 1 ? ' ' : '');
 }
+
+type BeanContextMapTypedKey =
+  {type: 'name', key: string} |
+  {type: 'uid', key: symbol}
+  ;
 
 export class BeanFactory {
   public warnLog: WarnLogOutput | null = (e) => {
@@ -38,8 +45,7 @@ export class BeanFactory {
   };
 
   private _beanDefinitions!: IBeanDefinition[];
-  private _beanContextMap!: Map<string, IBeanContext>;
-  private _beanClassMap!: Map<string, IBeanContext[]>;
+  private _beanContextMap!: TypedKeyMap<BeanContextMapTypedKey, IBeanContext>;
 
   public constructor() {
     this.reset();
@@ -146,7 +152,8 @@ export class BeanFactory {
           autowireField: propertyName,
           autowireLazy: lazy,
           beanName: options.name,
-          className: injectType && injectType.name
+          className: injectType && injectType.name,
+          beanDefinition: injectType && this._getBeanDefinition(injectType, 'class')
         });
       } else if (typeof propertyName === 'string') {
         beanDefinition.dependencies.push({
@@ -154,7 +161,8 @@ export class BeanFactory {
           autowireField: propertyName,
           autowireLazy: lazy,
           beanName: this._propertyNameToBeanName(propertyName),
-          className: injectType && injectType.name
+          className: injectType && injectType.name,
+          beanDefinition: injectType && this._getBeanDefinition(injectType, 'class')
         });
       } else {
         throw new Error('property name must be string without beanName');
@@ -174,7 +182,7 @@ export class BeanFactory {
           autowireField: null,
           autowireLazy: false,
           beanName: options.name,
-          className: injectType && injectType.name,
+          beanDefinition: injectType && this._getBeanDefinition(injectType, 'class'),
           constructorIndex: parameterIndex
         });
       } else {
@@ -185,7 +193,7 @@ export class BeanFactory {
           type: BeanDependencyType.CONSTRUCTOR,
           autowireField: null,
           autowireLazy: false,
-          className: injectType && injectType.name,
+          beanDefinition: injectType && this._getBeanDefinition(injectType, 'class'),
           constructorIndex: parameterIndex
         });
       }
@@ -214,6 +222,9 @@ export class BeanFactory {
     };
   }
 
+  private _getBeanDefinition<T>(target: ConstructorType<T>, targetType: 'class'): IBeanDefinition;
+  private _getBeanDefinition(target: Function, targetType: 'class'): IBeanDefinition;
+  private _getBeanDefinition<T extends Object>(target: T, targetType: 'prototype'): IBeanDefinition;
   private _getBeanDefinition(target: any, targetType?: 'class' | 'prototype'): IBeanDefinition {
     let prototype;
     if ((targetType === 'class') || (typeof target === 'function')) {
@@ -230,6 +241,7 @@ export class BeanFactory {
       return prototype[S_BeanDefinition];
     }
     const beanDefinition: IBeanDefinition = {
+      uniqueId: Symbol(),
       context: this,
       className: '',
       beanName: '',
@@ -370,17 +382,10 @@ export class BeanFactory {
 
   private _beanContextFromAw(awDefinition: IBeanDependency): Promise<IBeanContext> {
     let tempAwBeanDef: IBeanContext | undefined;
-    if (awDefinition.beanName) {
-      tempAwBeanDef = this._beanContextMap.get(awDefinition.beanName);
-    }
-    if (awDefinition.className) {
-      const list = this._beanClassMap.get(awDefinition.className);
-      if (list && list.length === 1) {
-        tempAwBeanDef = list[0];
-      }
-      if (list && list.length > 1) {
-        return Promise.reject(new Error(`Duplicated class=${awDefinition.className}`));
-      }
+    if (awDefinition.beanDefinition) {
+      tempAwBeanDef = this._beanContextMap.get({type: 'uid', key: awDefinition.beanDefinition.uniqueId});
+    } else if (awDefinition.beanName) {
+      tempAwBeanDef = this._beanContextMap.get({type: 'name', key: awDefinition.beanName});
     }
     if (!tempAwBeanDef) {
       return Promise.reject(new Error(`Unknown beanName=${awDefinition.beanName}`));
@@ -417,7 +422,7 @@ export class BeanFactory {
 
   public dumpDependencies() {
     this._beanDefinitions.forEach(temp => {
-      const item: IBeanContext = this._beanContextMap.get(temp.beanName) as IBeanContext;
+      const item: IBeanContext = this._beanContextMap.get({type: 'name', key: temp.beanName}) as IBeanContext;
       const stack: any = [{
         item, lazy: false
       }];
@@ -458,18 +463,18 @@ export class BeanFactory {
 
   private _findBeanContext(opts: {
     beanName?: string,
-    className?: string
+    beanDefinition?: IBeanDefinition
   }): IBeanContext | undefined {
     if (opts.beanName) {
-      const found = this._beanContextMap.get(opts.beanName);
+      const found = this._beanContextMap.get({type: 'name', key: opts.beanName});
       if (found) {
         return found;
       }
     }
-    if (opts.className) {
-      const temp = this._beanClassMap.get(opts.className);
-      if (temp && temp.length === 1) {
-        return temp[0];
+    if (opts.beanDefinition) {
+      const temp = this._beanContextMap.get({type: 'uid', key: opts.beanDefinition.uniqueId});
+      if (temp) {
+        return temp;
       }
     }
     return undefined;
@@ -482,22 +487,18 @@ export class BeanFactory {
         state: BeanState.Uninitialized,
         instance: null
       };
-      this._beanContextMap.set(item.beanName, item);
-
-      const listByClass = this._beanClassMap.get(item.className);
-      if (listByClass) {
-        listByClass.push(item);
-      } else {
-        this._beanClassMap.set(item.className, [item]);
-      }
+      this._beanContextMap.put([
+        {type: 'name', key: item.beanName},
+        {type: 'uid', key: item.uniqueId}
+      ], item);
     });
     return this._beanDefinitions.reduce(
-      (prev, cur) => prev.then(() => this._initBean(this._beanContextMap.get(cur.beanName) as any)),
+      (prev, cur) => prev.then(() => this._initBean(this._beanContextMap.get({type: 'uid', key: cur.uniqueId}) as any)),
       Promise.resolve()
     )
       .then(() => this._beanDefinitions.reduce(
         (prev, cur) => prev.then(() => {
-          const beanContext = this._beanContextMap.get(cur.beanName) as IBeanContext;
+          const beanContext = this._beanContextMap.get({type: 'uid', key: cur.uniqueId}) as IBeanContext;
           if (beanContext.postConstruct) {
             try {
               return Promise.resolve(beanContext.postConstruct.call(beanContext.instance));
@@ -513,22 +514,21 @@ export class BeanFactory {
 
   public stop(): Promise<void> {
     return this._beanDefinitions.reduce(
-      (prev, cur) => prev.then(() => this._stopBean(this._beanContextMap.get(cur.beanName) as any)),
+      (prev, cur) => prev.then(() => this._stopBean(this._beanContextMap.get({type: 'uid', key: cur.uniqueId}) as any)),
       Promise.resolve()
     )
       .then(() => {
-        this._beanClassMap = new Map();
+        this._beanContextMap = new TypedKeyMap();
       });
   }
 
   public reset() {
     this._beanDefinitions = [];
-    this._beanContextMap = new Map();
-    this._beanClassMap = new Map();
+    this._beanContextMap = new TypedKeyMap();
   }
 
   public getBeanByName<T>(beanName: string): IInstancedClass<T> | null {
-    const beanContext = this._beanContextMap.get(beanName);
+    const beanContext = this._beanContextMap.get({type: 'name', key: beanName});
     if (!beanContext) {
       return null;
     }
@@ -540,22 +540,22 @@ export class BeanFactory {
     return bean && bean.getObject();
   }
 
-  public getBeanByClass<T>(requiredType: string | ConstructorType<T>): IInstancedClass<T> | null {
-    const className = typeof requiredType === 'string' ? requiredType : requiredType.name;
-    const beanContext = this._beanClassMap.get(className);
-    if (!beanContext || beanContext.length != 1) {
+  public getBeanByClass<T>(requiredType: ConstructorType<T>): IInstancedClass<T> | null {
+    const beanDefinition = this._getBeanDefinition(requiredType, 'class');
+    const beanContext = this._beanContextMap.get({type: 'uid', key: beanDefinition.uniqueId});
+    if (!beanContext) {
       return null;
     }
-    return new InstancedClass<T>(beanContext[0]);
+    return new InstancedClass<T>(beanContext);
   }
 
-  public getBeanObjectByClass<T>(requiredType: string | ConstructorType<T>): T | null {
+  public getBeanObjectByClass<T>(requiredType: ConstructorType<T>): T | null {
     const bean = this.getBeanByClass<T>(requiredType);
     return bean && bean.getObject();
   }
 
   public getModelByName<T>(beanName: string): IReflectionClass<T> | null {
-    const beanContext = this._beanContextMap.get(beanName);
+    const beanContext = this._beanContextMap.get({type: 'name', key: beanName});
     if (!beanContext) {
       return null;
     }
@@ -565,23 +565,23 @@ export class BeanFactory {
     return new ReflectionClass(beanContext);
   }
 
-  public getModelByClass<T>(requiredType: string | ConstructorType<T>): IReflectionClass<T> | null {
-    const className = typeof requiredType === 'string' ? requiredType : requiredType.name;
-    const beanContext = this._beanClassMap.get(className);
-    if (!beanContext || beanContext.length != 1) {
+  public getModelByClass<T>(requiredType: ConstructorType<T>): IReflectionClass<T> | null {
+    const beanDefinition = this._getBeanDefinition(requiredType, 'class');
+    const beanContext = this._beanContextMap.get({type: 'uid', key: beanDefinition.uniqueId});
+    if (!beanContext) {
       return null;
     }
-    if (!beanContext[0].beanType.has(BeanType.Model)) {
+    if (!beanContext.beanType.has(BeanType.Model)) {
       throw new Error(`Unknown model by className=${requiredType}`);
     }
-    return new ReflectionClass<T>(beanContext[0]);
+    return new ReflectionClass<T>(beanContext);
   }
 
   public getBeansByComponentType(componentType: string | Function): IInstancedClass<any>[] {
     const componentTypeName = typeof componentType === 'string' ? componentType : componentType.name;
     return this._beanDefinitions.reduce(
       (list, cur) => {
-        const beanContext = this._beanContextMap.get(cur.beanName) as IBeanContext;
+        const beanContext = this._beanContextMap.get({type: 'uid', key: cur.uniqueId}) as IBeanContext;
         if (beanContext.componentTypes.findIndex(v => v === componentTypeName) >= 0) {
           list.push(new InstancedClass(beanContext));
         }
@@ -595,7 +595,7 @@ export class BeanFactory {
     const componentTypeName = typeof componentType === 'string' ? componentType : componentType.name;
     return this._beanDefinitions.reduce(
       (list, cur) => {
-        const beanContext = this._beanContextMap.get(cur.beanName) as IBeanContext;
+        const beanContext = this._beanContextMap.get({type: 'uid', key: cur.uniqueId}) as IBeanContext;
         if (beanContext.componentTypes.findIndex(v => v === componentTypeName) >= 0) {
           list.push(new ReflectionClass(beanContext));
         }

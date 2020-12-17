@@ -23,6 +23,7 @@ export interface IBeanDependency {
   type: BeanDependencyType;
   beanName?: string;
   className?: string;
+  beanDefinition?: IBeanDefinition;
 
   autowireField: string | symbol | null;
   autowireLazy: boolean;
@@ -49,6 +50,7 @@ export interface IAttributeAnnotationDefinitionForMethod {
 export type IAttributeAnnotationDefinition = IAttributeAnnotationDefinitionForOther | IAttributeAnnotationDefinitionForMethod;
 
 export interface IBeanDefinition {
+  uniqueId: symbol;
   context: BeanFactory;
   componentTypes: string[];
   className: string;
